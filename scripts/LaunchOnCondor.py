@@ -136,7 +136,8 @@ def CreateTheShellFile(argv):
     shell_file=open(Path_Shell,'w')
     shell_file.write('#! /bin/sh\n')
     shell_file.write(CopyRights + '\n')
-    # shell_file.write('pwd\n')
+    if subTool != 'slurm':
+        shell_file.write('pwd\n')
     if subTool == 'slurm':
         shell_file.write('#SBATCH --job-name=%s_job\n' % LogFileName)
         #shell_file.write('#SBATCH --output=%s.log\n' % Path_Log)
@@ -149,7 +150,6 @@ def CreateTheShellFile(argv):
         if Jobs_Requeue:
             shell_file.write('#SBATCH --requeue\n')
         #shell_file.write('\nsrun sh -c \'\n\n')
-    	shell_file.write('pwd\n')
         shell_file.write('cd "${LOCALSCRATCH}"\n')
         shell_file.write('exec 1> %s.out 2> %s.err\n' % (LogFileName, LogFileName))
     
@@ -373,7 +373,7 @@ def AddJobToCmdFile():
         if(not os.path.isabs(absoluteShellPath)): absoluteShellPath= os.getcwd() + "/"+absoluteShellPath
         Jobs_List.extend([absoluteShellPath])
     elif subTool=='slurm':
-        cmd_file.write('sbatch --partition=cp3 --qos=cp3 --wckey=cms %s\n'      % Path_Shell) 
+        cmd_file.write('sbatch --partition=Def,cp3 --qos=normal --wckey=cms %s\n'      % Path_Shell) 
     else:
         os.system('rm -f ' +os.path.relpath(Path_Log) + '.log') #delete log file to be sure there is no overlap
         cmd_file.write('\n')
