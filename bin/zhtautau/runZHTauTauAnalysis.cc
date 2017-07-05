@@ -1078,7 +1078,7 @@ int main(int argc, char* argv[])
     LorentzVector elDiff(0,0,0,0);
     for(size_t ilep=0; ilep<leptons.size(); ilep++){
       bool passKin(true),passId(true),passIso(true);
-      bool passLooseLepton(true), passSoftMuon(true), passSoftElectron(true), passVetoElectron(true);
+      bool passVeryLooseLepton(true), passLooseLepton(true), passSoftMuon(true), passSoftElectron(true), passVetoElectron(true);
       int lid=leptons[ilep].pdgId();
 
       //no need for charge info any longer
@@ -1116,12 +1116,14 @@ int main(int argc, char* argv[])
       passLooseLepton &= lid==11 ? patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut) :
       patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::Loose, patUtils::CutVersion::CutSet::Moriond17Cut);
 
-
-
+      // passVeryLooseLepton
+      passVeryLooseLepton &= lid==11 ?  patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::VeryLoose, patUtils::CutVersion::CutSet::ICHEP16Cut) :
+      patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::VeryLoose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+      
 
       //apply muon corrections
       //if(abs(lid)==13 && passIso && passId)
-      if(abs(lid)==13 && passLooseLepton){
+      if(abs(lid)==13 && passVeryLooseLepton){
         passSoftMuon=false;
           if(is2016MC || is2016data){
                    if(muCor2016){
@@ -1144,7 +1146,7 @@ int main(int argc, char* argv[])
 
       //apply electron corrections
       //if(abs(lid)==11  && passIso && passId)
-      if(abs(lid)==11  && passLooseLepton){
+      if(abs(lid)==11  && passVeryLooseLepton){
         //std::cout<<"START ---- "<<std::endl;
         elDiff -= leptons[ilep].p4();
         const EcalRecHitCollection* recHits = (leptons[ilep].el.isEB()) ? recHitCollectionEBHandle.product() : recHitCollectionEEHandle.product();
@@ -1184,21 +1186,21 @@ int main(int argc, char* argv[])
         float leta = fabs(lid==11 ?  leptons[ilep].el.superCluster()->eta() : leptons[ilep].eta());
         if(leta> (lid==11 ? 2.5 : 2.4) )            passKin=false;
         if(lid==11 && (leta>1.4442 && leta<1.5660)) passKin=false;
-        passLooseLepton &= passKin;
+        passVeryLooseLepton &= passKin;
         passSoftMuon    &= passKin;
         if(lid==13){
-          if(leptons[ilep].pt()<10) passLooseLepton=false;
+          if(leptons[ilep].pt()<10) passVeryLooseLepton=false;
           if(leptons[ilep].pt()<3)  passSoftMuon=false;
           if(leptons[ilep].pt()<25) passKin=false;
         }else if(lid==11){
-          if(leptons[ilep].pt()<10) passLooseLepton=false;
+          if(leptons[ilep].pt()<10) passVeryLooseLepton=false;
           if(leptons[ilep].pt()<30) passKin=false;
         }
         //if(leptons[ilep].pt()<25) passKin=false;
 
         //if(passId && passIso && passKin)          selLeptons.push_back(leptons[ilep]);
-        if(passLooseLepton && passKin)            selLeptons.push_back(leptons[ilep]); //we need loose lepton for FR
-        else if(passLooseLepton || passSoftMuon)  extraLeptons.push_back(leptons[ilep]);
+        if(passVeryLooseLepton && passKin)            selLeptons.push_back(leptons[ilep]); //we need loose lepton for FR
+        else if(passVeryLooseLepton || passSoftMuon)  extraLeptons.push_back(leptons[ilep]);
       }
       std::sort(selLeptons.begin(),   selLeptons.end(), utils::sort_CandidatesByPt);
       std::sort(extraLeptons.begin(), extraLeptons.end(), utils::sort_CandidatesByPt);
